@@ -3,23 +3,25 @@
 #include "kernel/fcntl.h"
 #include "user/user.h"
 
+//将一个以null结尾的字符串t复制给s
 char*
 strcpy(char *s, const char *t)
 {
   char *os;
 
-  os = s;
-  while((*s++ = *t++) != 0)
+  os = s;//保存目标串s的起始位置
+  while((*s++ = *t++) != 0)//每次地址++并取出一个字符，直到\0(null)终止
     ;
   return os;
 }
 
+//比较两个字符串是否相等，返回为0时表示相等
 int
 strcmp(const char *p, const char *q)
 {
   while(*p && *p == *q)
     p++, q++;
-  return (uchar)*p - (uchar)*q;
+  return (uchar)*p - (uchar)*q;//比较当前字符的ASCII码值
 }
 
 uint
