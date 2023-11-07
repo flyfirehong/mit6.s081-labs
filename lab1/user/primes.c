@@ -2,6 +2,7 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
+
 void primes(int p[]){
     int i;
     read(p[0], &i, sizeof(int));

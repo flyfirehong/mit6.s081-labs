@@ -34,6 +34,7 @@ strlen(const char *s)
   return n;
 }
 
+//把前n个字节全都设置成c
 void*
 memset(void *dst, int c, uint n)
 {
@@ -72,6 +73,7 @@ gets(char *buf, int max)
   return buf;
 }
 
+//将文件信息放到结构体st中，失败返回-1
 int
 stat(const char *n, struct stat *st)
 {
@@ -97,6 +99,7 @@ atoi(const char *s)
   return n;
 }
 
+//拷贝源地址数据到目标地址
 void*
 memmove(void *vdst, const void *vsrc, int n)
 {
@@ -106,9 +109,11 @@ memmove(void *vdst, const void *vsrc, int n)
   dst = vdst;
   src = vsrc;
   if (src > dst) {
+      //源地址与目标地址无重叠的情况
     while(n-- > 0)
       *dst++ = *src++;
   } else {
+      //源地址在目标地址之前，有重叠，那么从后往前拷贝，以防数据被覆盖
     dst += n;
     src += n;
     while(n-- > 0)
@@ -117,9 +122,11 @@ memmove(void *vdst, const void *vsrc, int n)
   return vdst;
 }
 
+//比较两个区域的前n个字节是否相等
 int
 memcmp(const void *s1, const void *s2, uint n)
 {
+    //将输入转为char*是为了按字节进行比较
   const char *p1 = s1, *p2 = s2;
   while (n-- > 0) {
     if (*p1 != *p2) {
