@@ -34,7 +34,7 @@ strlen(const char *s)
   return n;
 }
 
-//把前n个字节全都设置成c
+//把前n个字节全都设置成数字c
 void*
 memset(void *dst, int c, uint n)
 {
