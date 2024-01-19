@@ -31,6 +31,7 @@ fetchstr(uint64 addr, char *buf, int max)
   return strlen(buf);
 }
 
+//检索寄存器
 static uint64
 argraw(int n)
 {
@@ -104,7 +105,15 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_wait(void);
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
+extern uint64 sys_trace(void);
+extern uint64 sys_sysinfo(void);
 
+/*
+ *syscalls是一个数组，每个元素是一个函数指针，指向没有任何参数但返回类型为uint64的函数。
+ * [SYS_fork] sys_fork: 这是 designated initializer 语法（C99标准），
+ * 它指定了数组的初始化。SYS_fork 是一个常量或枚举值，表示数组的索引位置。
+ * sys_fork 则是一个函数的名称，表示该索引位置对应的函数。
+ */
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -127,17 +136,51 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_trace]   sys_trace,
+[SYS_sysinfo]   sys_sysinfo,
 };
 
+//系统调用号->名字，方便打印
+static char* sysnames[] = {
+    "fork",
+    "exit",
+    "wait",
+    "pipe",
+    "read",
+    "kill",
+    "exec",
+    "fstat",
+    "chdir",
+    "dup",
+    "getpid",
+    "sbrk",
+    "sleep",
+    "uptime",
+    "open",
+    "write",
+    "mknod",
+    "unlink",
+    "link",
+    "mkdir",
+    "close",
+    "trace",
+    "sysinfo",
+};
+
+//系统调用入口函数
 void
 syscall(void)
 {
   int num;
   struct proc *p = myproc();
 
-  num = p->trapframe->a7;
+  num = p->trapframe->a7;//系统调用号存在a7寄存器中
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    p->trapframe->a0 = syscalls[num]();
+    p->trapframe->a0 = syscalls[num]();//返回值存在a0寄存器
+    if(p->tracemask & (1<<num)){
+        //判断是否需要trace这个系统调用
+        printf("%d: syscall %s -> %d\n", p->pid, sysnames[num-1], p->trapframe->a0);
+    }
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);

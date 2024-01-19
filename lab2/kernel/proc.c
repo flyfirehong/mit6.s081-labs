@@ -101,6 +101,7 @@ allocpid() {
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
 // If there are no free procs, or a memory allocation fails, return 0.
+//找到一个空闲进程，初始化在内核中运行所需要的状态
 static struct proc*
 allocproc(void)
 {
@@ -141,6 +142,9 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  //新的进程不追踪原来的syscalls
+  p->tracemask = 0;
+
   return p;
 }
 
@@ -164,6 +168,7 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  //p->tracemask = 0;
 }
 
 // Create a user page table for a given process,
@@ -280,6 +285,8 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
+  //fork出来的新进程继承父进程的mask
+  np->tracemask = p->tracemask;
 
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
@@ -653,4 +660,19 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+uint64
+count_free_proc(void){
+    struct proc *p;
+    uint64 count = 0;
+    //procinit中初始化了进程表，遍历即可
+    for(p = proc; p<&proc[NPROC]; p++){
+        acquire(&p->lock);//加锁
+        if(p->state != UNUSED){
+            count++;
+        }
+        release(&p->lock);
+    }
+    return count;
 }

@@ -13,14 +13,15 @@ void freerange(void *pa_start, void *pa_end);
 
 extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
-
+//定义链表节点
 struct run {
   struct run *next;
 };
 
+//包含一个自旋锁，一个空闲内存块链表的指针
 struct {
-  struct spinlock lock;
-  struct run *freelist;
+  struct spinlock lock;//用于实现一个自旋锁的结构体
+  struct run *freelist;//用于指向struct run类型的链表
 } kmem;
 
 void
@@ -70,13 +71,27 @@ kalloc(void)
 {
   struct run *r;
 
-  acquire(&kmem.lock);
-  r = kmem.freelist;
+  acquire(&kmem.lock);//获取内存池的锁
+  r = kmem.freelist;//将r指向空闲块链表的第一个
   if(r)
-    kmem.freelist = r->next;
+    kmem.freelist = r->next;//更新空闲链表的头节点
   release(&kmem.lock);
 
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+uint64
+kfreemem(void){
+    struct run* r;
+    acquire(&kmem.lock);
+    int free = 0;
+    r = kmem.freelist;
+    while(r){
+        r+=PGSIZE;
+        r=r->next;
+    }
+    release(&kmem.lock);
+    return free;
 }

@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -94,4 +95,32 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_trace(void)
+{
+    //用于接收从用户态传进来的掩码
+    int trace_sys_mask;
+    //argint用于从寄存器拿参数
+    if(argint(0, &trace_sys_mask)<0){
+        return -1;
+    }
+    //myproc用于获取当前进程的proc指针，通过指针获取trace的掩码
+    myproc()->tracemask = trace_sys_mask;
+    return 0;
+}
+
+//这里是内核中系统调用的实现，和用户态下的接口不一样
+uint64
+sys_sysinfo(void){
+    struct proc *pr = myproc();
+    uint64 p;
+    if(argaddr(0,&p)<0) return -1;//获取用户buffer地址
+    struct sysinfo s;
+    s.nproc = kfreemem();
+    s.freemem = count_free_proc();
+    if(copyout(pr->pagetable, p, (char *)&s, sizeof(s)) < 0)
+        return -1;
+    return 0;
 }
