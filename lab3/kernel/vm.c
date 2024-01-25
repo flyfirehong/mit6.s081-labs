@@ -21,9 +21,11 @@ kvmmake(void)
 {
   pagetable_t kpgtbl;
 
+  //给顶层页表目录分配一个物理页面，然后对目录中所有PTE置0
   kpgtbl = (pagetable_t) kalloc();
   memset(kpgtbl, 0, PGSIZE);
 
+  //一个个的映射IO设备
   // uart registers
   kvmmap(kpgtbl, UART0, UART0, PGSIZE, PTE_R | PTE_W);
 
@@ -77,6 +79,7 @@ kvminithart()
 //   21..29 -- 9 bits of level-1 index.
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
+//返回最后一层的一个指向pte的指针
 pte_t *
 walk(pagetable_t pagetable, uint64 va, int alloc)
 {
@@ -134,6 +137,7 @@ kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
 // physical addresses starting at pa. va and size might not
 // be page-aligned. Returns 0 on success, -1 if walk() couldn't
 // allocate a needed page-table page.
+//将地址[va,va+size)的虚拟地址映射到[pa,pa+size)的物理地址
 int
 mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 {
